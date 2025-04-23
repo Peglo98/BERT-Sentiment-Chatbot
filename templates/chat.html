@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Analizy Sentymentu dla recenzji</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            margin-top: 20px;
+            background: #7F534B;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            color: #1F0318;
+        }
+        .container {
+            background: white;
+            width: 40%;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+            border-radius: 0.375rem;
+        }
+        .card-header:first-child {
+            border-radius: calc(0.375rem - 1px) calc(0.375rem - 1px) 0 0;
+        }
+        .card-header {
+            padding: 1rem 1.5rem;
+            margin-bottom: 0;
+            background-color: rgba(0,0,0,.03);
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-box {
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 400px;
+            background: #ffffff;
+        }
+        .chat-left, .chat-right {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        .positive {
+            background-color: #b5ff70;
+            color: black;
+        }
+        .negative {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        .message_input {
+            border: none;
+            width: 100%;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .message_send_btn {
+            width: 80%;
+            background-color: #1F0318;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .message_send_reset {
+            width: 15%;
+            background-color: #F02323;
+            color: white;
+            margin-left: 10px;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+        Analiza recenzji na podstawie klasyfikacji modelu językowego BERT
+        </div>
+        <div class="card-body chat-box" id="chatbox">
+        </div>
+        <div class="p-3">
+            <input type="text" id="userInput" class="form-control message_input" placeholder="Wpisz recenzję..." onkeypress="return runScript(event)">
+            <button class="btn message_send_btn" type="button" onclick="sendMessage()">Wyślij</button><button class="message_send_reset" type="button" onclick="window.location.reload()">X</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+function sendMessage() {
+    var message = $('#userInput').val();
+    if (message.trim() === '') { return false; }
+    displayMessage(message, 'chat-right');
+    $.ajax({
+        url: '/predict',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ review: message }),
+        success: function(data) {
+            var responseMsg = `Recenzja jest ${data.sentiment}`;
+            var responseType = data.sentiment === 'pozytywna' ? 'chat-left positive' : 'chat-left negative';
+            displayMessage(responseMsg, responseType);
+        }
+    });
+    $('#userInput').val('');
+}
+
+function displayMessage(message, type) {
+    var newMessage = `<div class="${type}"><div>${message}</div></div>`;
+    $('#chatbox').append(newMessage);
+    $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+}
+
+function runScript(e) {
+    if (e.keyCode == 13) {
+        sendMessage();
+        return false;
+    }
+}
+</script>
+</body>
+</html>
